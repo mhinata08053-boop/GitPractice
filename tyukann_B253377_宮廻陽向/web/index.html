@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Prime Checker</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-primary: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --success: #10b981;
+            --error: #ef4444;
+            --glow: 0 0 20px rgba(139, 92, 246, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(14, 165, 233, 0.1) 0%, transparent 20%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6), var(--glow);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 1.25rem;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            font-family: 'Fira Code', monospace;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+        }
+
+        input::placeholder {
+            color: rgba(148, 163, 184, 0.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(255,255,255,0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px var(--accent-primary);
+        }
+
+        button:hover::after {
+            opacity: 1;
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            filter: grayscale(0.5);
+        }
+
+        .result-area {
+            margin-top: 2rem;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .result-area.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .status {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .status.prime {
+            color: var(--success);
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .status.composite {
+            color: var(--error);
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .status.error {
+            color: #fbbf24;
+        }
+
+        .meta {
+            color: var(--text-secondary);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+        }
+
+        .loader {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            display: none;
+            margin-left: 10px;
+        }
+
+        .btn-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+    </style>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Prime Velocity</h1>
+            <p class="subtitle">超高速ミラー・ラビン素数判定</p>
+            
+            <div class="input-group">
+                <input type="text" id="numberInput" placeholder="判定したい整数を入力..." autocomplete="off">
+            </div>
+
+            <button id="checkBtn">
+                <div class="btn-content">
+                    <span id="btnText">判定開始</span>
+                    <div class="loader" id="loader"></div>
+                </div>
+            </button>
+
+            <div class="result-area" id="resultArea">
+                <div class="status" id="statusText"></div>
+                <div class="meta" id="timeText"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('numberInput');
+        const btn = document.getElementById('checkBtn');
+        const btnText = document.getElementById('btnText');
+        const loader = document.getElementById('loader');
+        const resultArea = document.getElementById('resultArea');
+        const statusText = document.getElementById('statusText');
+        const timeText = document.getElementById('timeText');
+
+        // Allow entering only numbers
+        input.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+
+        // Trigger on Enter key
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkPrime();
+            }
+        });
+
+        btn.addEventListener('click', checkPrime);
+
+        async function checkPrime() {
+            const number = input.value;
+            if (!number) return;
+
+            // UI State: Loading
+            setLoading(true);
+            resultArea.classList.remove('visible');
+
+            try {
+                const startTime = performance.now();
+                
+                // Fetch from Java Server
+                const response = await fetch(`/api/check?number=${number}`);
+                const data = await response.json();
+                
+                const endTime = performance.now();
+                // Client-side aesthetic delay logic could be added here, 
+                // but for "speed" demonstration we show it instantly.
+
+                // Update UI based on response
+                resultArea.classList.add('visible');
+                
+                if (data.error) {
+                    statusText.textContent = "Error";
+                    statusText.className = "status error";
+                    timeText.textContent = data.message;
+                } else {
+                    if (data.isPrime) {
+                        statusText.textContent = "PRIME NUMBER";
+                        statusText.className = "status prime";
+                    } else {
+                        statusText.textContent = "COMPOSITE NUMBER";
+                        statusText.className = "status composite";
+                    }
+                    
+                    // Show server-side processing time + network/total time
+                    timeText.textContent = `Server Process: ${data.timeNs} ns`;
+                }
+
+            } catch (err) {
+                console.error(err);
+                resultArea.classList.add('visible');
+                statusText.textContent = "Connection Error";
+                statusText.className = "status error";
+                timeText.textContent = "サーバーに接続できません。Javaプログラムを実行してください。";
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function setLoading(isLoading) {
+            btn.disabled = isLoading;
+            if (isLoading) {
+                btnText.textContent = "計算中...";
+                loader.style.display = 'block';
+            } else {
+                btnText.textContent = "判定開始";
+                loader.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
